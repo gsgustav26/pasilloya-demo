@@ -122,16 +122,23 @@ function abrirBot(modo){
   bq("#qr").innerHTML=SUGERENCIAS.map(s=>`<button class="chip" data-bq="${esc(s)}">${esc(s)}</button>`).join("");
   const ta=bq("#bin");
   if(modo==="lista"){ decir({txt:"Pega aquí tu lista tal como la tienes: copiada de Notas del celular (una cosa por línea) o de un mensaje de WhatsApp.",botones:[["Probar con una lista de Notas","ejn"],["Probar con un mensaje","ej"]]}); }
-  setTimeout(()=>ta.focus(),60);
+  // En el celular NO se abre el teclado solo: tapaba la parte de arriba del chat y no se podía cerrar.
+  if(!esCelular) setTimeout(()=>ta.focus(),60);
+  ajustarAlto();
 }
-function cerrarBot(){ const s=bq("#sheet"); if(!s||s.hidden) return; s.hidden=true; document.body.style.overflow=""; botAbierto=false }
+function cerrarBot(){ const s=bq("#sheet"); if(!s||s.hidden) return; bq("#bin").blur(); s.hidden=true; document.body.style.overflow=""; botAbierto=false }
+const esCelular=matchMedia("(pointer:coarse)").matches||/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+// Con el teclado abierto, el chat se encoge al espacio que queda visible, así la barra de cerrar nunca se esconde.
+function ajustarAlto(){ const s=bq("#sheet"), v=window.visualViewport; if(!s||!v) return; s.style.top=v.offsetTop+"px"; s.style.height=v.height+"px" }
+window.visualViewport?.addEventListener("resize",ajustarAlto);
+window.visualViewport?.addEventListener("scroll",ajustarAlto);
 window.cerrarBot=cerrarBot; window.abrirBot=abrirBot;
 
 bq("#botF").addEventListener("submit",e=>{ e.preventDefault(); const ta=bq("#bin"); const v=ta.value; ta.value=""; ta.style.height=""; enviar(v) });
 bq("#bin").addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.shiftKey&&!/Mobi|Android/i.test(navigator.userAgent)){ e.preventDefault(); bq("#botF").requestSubmit() } });
 bq("#bin").addEventListener("input",e=>{ const t=e.target; t.style.height=""; t.style.height=Math.min(t.scrollHeight,140)+"px" });
 bq("#sheet").addEventListener("click",e=>{
-  if(e.target.id==="sheet"||e.target.closest("#botX")) return cerrarBot();
+  if(e.target.id==="sheet"||e.target.closest("#botX,.grip")) return cerrarBot();
   const b=e.target.closest("button"); if(!b) return;
   if(b.dataset.bq){ if(b.dataset.bq==="Pegar mi lista") abrirBot("lista"); else enviar(b.dataset.bq) }
   else if(b.dataset.bact){ const [a,v]=b.dataset.bact.split(":");
@@ -145,3 +152,7 @@ bq("#sheet").addEventListener("click",e=>{
   else if(b.dataset.id){ cerrarBot() }
 });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") cerrarBot() });
+// Deslizar hacia abajo desde la parte de arriba del chat también lo cierra (como en las apps).
+{ let y0=null; const h=bq(".chat-top");
+  h.addEventListener("touchstart",e=>{ y0=e.touches[0].clientY },{passive:true});
+  h.addEventListener("touchend",e=>{ if(y0!==null&&e.changedTouches[0].clientY-y0>60) cerrarBot(); y0=null },{passive:true}); }
