@@ -313,7 +313,9 @@ th{font-size:12px;color:var(--muted);font-weight:600}
 <script>
 // ---------- Datos inventados del local ----------
 const PASILLOS={1:"Lácteos y huevos",2:"Panadería y desayuno",3:"Arroz, granos y pastas",4:"Salsas, aceites y condimentos",5:"Enlatados",6:"Snacks y dulces",7:"Bebidas",8:"Limpieza"};
-const COLOR={1:"#2563c9",2:"#d9741a",3:"#8a5a14",4:"#c2355c",5:"#0f8a8a",6:"#a8339a",7:"#1a8fd0",8:"#6a4fc4"};
+// Todos los pasillos usan el color de la marca: en el súper real los pasillos se reconocen por el NÚMERO, no por colores
+// (GS, 21-11-2026: los colores por pasillo confundían).
+const COLOR=new Proxy({},{get:()=>marca});
 const NIVEL={1:"abajo",2:"a la altura de la cintura",3:"a la altura de los ojos",4:"arriba"};
 const ALTURA={1:"Abajo",2:"Cintura",3:"Ojos",4:"Arriba"};
 // id, nombre, marca, categoría, grupo, pasillo, lado(I/D), estante(A-D), nivel, precio, tamaño, unidad, semáforo azúcar/grasa/sal, stock, patrocinado, palabras
@@ -427,8 +429,8 @@ function mapSvg(pins){
     s+=`<rect x="${x-rw/2-7}" y="${yTop}" width="7" height="${yBot-yTop}" rx="3" fill="${c}"/>`;
     s+=`<rect x="${x+rw/2}" y="${yTop}" width="7" height="${yBot-yTop}" rx="3" fill="${c}"/>`;
     if(on) s+=`<rect x="${x-rw/2}" y="${yTop}" width="${rw}" height="${yBot-yTop}" rx="4" fill="${COLOR[i]}" opacity=".16"/>`;
-    s+=`<rect x="${x-12}" y="${yTop-26}" width="24" height="18" rx="5" fill="${COLOR[i]}" opacity="${on?1:.55}"/>`;
-    s+=`<text x="${x}" y="${yTop-12.5}" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="12" fill="#fff">${i}</text>`;
+    s+=`<rect x="${x-12}" y="${yTop-26}" width="24" height="18" rx="5" fill="${on?COLOR[i]:"#e3e8e3"}"/>`;
+    s+=`<text x="${x}" y="${yTop-12.5}" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="12" fill="${on?"#fff":"#5c6861"}">${i}</text>`;
   }
   s+=`<rect x="${W/2-44}" y="${H-26}" width="88" height="18" rx="9" fill="#ffd83a"/><text x="${W/2}" y="${H-13.5}" text-anchor="middle" font-size="10" font-weight="800" fill="#1a1a1a">ENTRADA · QR</text>`;
   pins.forEach((p,k)=>{
@@ -540,7 +542,7 @@ function mostrar(p,msg){
         <div class="info"><h2>${esc(p.nombre)}</h2><div class="sub">${esc(p.marca)} · ${p.tam} ${p.u}</div><span class="badge ${k}">${t}</span></div>
         <div class="pricetag"><b>${money(p.precio)}</b><small>${unit(p)}</small></div></div>
       ${sust?`<div class="out-alert"><b>Hoy está agotado. Te puede servir este:</b>${altHtml(sust)}</div>`:""}
-      ${semHtml(p)}
+      <div><div class="label" style="margin-bottom:6px">Semáforo nutricional (el mismo del empaque)</div>${semHtml(p)}</div>
       <button class="btn big${enLista?" done":""}" id="addBtn">${enLista?"✓ En tu ruta · ver mi ruta":"Agregar a mi ruta"}</button>
     </div>
   </article>
