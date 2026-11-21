@@ -1,0 +1,722 @@
+<title>PasilloYa</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: app de una columna para usar con una mano. Buscador fijo arriba; la respuesta ("Pasillo 5") es lo primero y lo más grande,
+   dibujada como el letrero colgante del súper. Un solo color de marca (cambiable), amarillo solo para precios, color de pasillo solo para ubicar. */
+:root{
+  --brand:#0a7d47;
+  --bg:#ffffff; --surface:#ffffff; --ink:#17211b; --muted:#5c6861; --line:#dfe4de;
+  --brand-text:var(--brand); --soft:color-mix(in srgb,var(--brand) 9%,var(--surface));
+  --tag:#ffd83a; --tag-ink:#1c1a10; --hi:#e8432d; --rack:#d5dbd5;
+  --red:#d42a3c; --amber:#e6960a; --green:#23914a;
+  --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --body:"Inter","Segoe UI",system-ui,sans-serif;
+}
+/* Diseño claro siempre (decisión de GS): fondo blanco también en celulares con modo oscuro. */
+:root,:root[data-theme="dark"]{color-scheme:light}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;padding-bottom:92px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--brand)}
+.in{max-width:560px;margin:0 auto;position:relative;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance}
+h3{font-size:18px}
+p{margin:0}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:3px solid var(--tag);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.stack{display:flex;flex-direction:column;gap:16px}
+main.in{padding-block:16px}
+
+/* Barra fija con el buscador */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--brand);color:#fff;padding-block:10px 12px}
+.bar-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{display:flex;align-items:center;gap:9px;border:0;background:none;padding:0;color:#fff;text-align:left}
+.logo{width:34px;height:34px;border-radius:10px;background:var(--tag);color:var(--tag-ink);display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:19px;transform:rotate(-6deg)}
+.brand b{font-family:var(--display);font-size:19px;font-weight:800;line-height:1;display:block}
+.brand small{font-size:12px;opacity:.85}
+.switch{border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.12);color:#fff;border-radius:99px;padding:8px 12px;font-size:13px;font-weight:600;white-space:nowrap}
+.sbox{display:flex;align-items:center;gap:6px;background:#fff;color:#17211b;border-radius:16px;padding:5px 5px 5px 14px;margin-top:10px;box-shadow:0 3px 10px rgba(0,0,0,.18)}
+.sbox svg{flex:none}
+.sbox input{flex:1;min-width:0;border:0;background:transparent;color:#17211b;font-size:17px;height:46px;outline:0;appearance:none}
+.sbox input::placeholder{color:#74807a}
+#clr{border:0;background:none;color:#74807a;font-size:24px;width:40px;height:46px;line-height:1}
+.cam{display:flex;align-items:center;gap:6px;border:0;border-radius:12px;height:46px;padding:0 13px;font-weight:700;font-size:15px;background:var(--tag);color:var(--tag-ink)}
+.ta{position:absolute;top:100%;margin-top:8px;left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));background:var(--surface);color:var(--ink);border-radius:16px;box-shadow:0 12px 32px rgba(0,0,0,.28);overflow:hidden;border:1px solid var(--line)}
+.ta-i{display:grid;grid-template-columns:36px 1fr auto;gap:10px;align-items:center;width:100%;min-height:56px;border:0;border-bottom:1px solid var(--line);background:none;padding:6px 12px;text-align:left}
+.ta-i:last-child{border-bottom:0}
+.ta-img{width:36px;height:44px}
+.ta-n{min-width:0}
+.ta-n b{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ta-n small{color:var(--muted);font-size:13px}
+.ta-all{display:block;color:var(--brand-text);font-weight:700;font-size:15px}
+.mini{display:inline-block;background:var(--c);color:#fff;border-radius:6px;padding:1px 7px;font-weight:700;font-size:12px;white-space:nowrap}
+
+/* Inicio */
+.intro h2{font-size:27px;font-weight:800;line-height:1.1;letter-spacing:-.4px}
+.intro mark{background:linear-gradient(transparent 58%,var(--tag) 58%);color:inherit;padding:0 2px}
+.intro p{color:var(--muted);margin-top:6px;font-size:15px}
+.ways{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.way{border:1px solid var(--line);background:#f6f8f5;border-radius:16px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;min-height:104px}
+.way i{width:42px;height:42px;border-radius:13px;background:var(--soft);color:var(--brand-text);display:grid;place-items:center}
+.way b{font-size:15px;line-height:1.15}
+.way span{font-size:12px;color:var(--muted);line-height:1.2}
+.label{font-size:12px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:9px 14px;font-size:14px;font-weight:500;min-height:40px}
+.chip[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tile{border:1px solid var(--line);background:var(--surface);border-radius:16px;padding:10px;display:grid;grid-template-columns:44px 1fr;gap:4px 10px;align-items:center;text-align:left}
+.tile .pk{width:44px;height:58px;grid-row:span 2}
+.tile b{font-size:14px;line-height:1.2;font-weight:600;min-width:0}
+.tile .row2{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:14px;font-weight:700}
+.promo{display:grid;grid-template-columns:52px 1fr auto;gap:12px;align-items:center;border:1px dashed var(--line);background:var(--surface);border-radius:16px;padding:10px 12px;text-align:left;width:100%}
+.promo .pk{width:52px;height:66px}
+.promo b{display:block;font-size:15px;line-height:1.2}
+.promo small{color:var(--muted);font-size:13px}
+.spon{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--ink);background:color-mix(in srgb,var(--tag) 45%,var(--surface));border-radius:4px;padding:1px 6px}
+.price{font-family:var(--display);font-weight:800;background:var(--tag);color:var(--tag-ink);border-radius:6px;padding:2px 8px;white-space:nowrap}
+.dir{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dir button{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:8px 10px;min-height:52px;text-align:left;font-size:14px;font-weight:600;line-height:1.2}
+.num{width:34px;height:34px;border-radius:10px;background:var(--c);color:#fff;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:17px;flex:none}
+.fine{font-size:12px;color:var(--muted);text-align:center}
+
+/* Resultado */
+.back{border:0;background:none;color:var(--brand-text);font-weight:700;padding:4px 0;align-self:flex-start;min-height:36px}
+.note{background:var(--soft);border-radius:14px;padding:10px 14px;font-size:15px}
+.shots{display:flex;align-items:center;justify-content:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px}
+.shots figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0}
+.shots img{width:104px;height:104px;object-fit:cover;border-radius:14px;border:3px solid var(--tag)}
+.bigpack{width:104px;height:104px;border-radius:14px;border:3px solid var(--c);background:var(--bg);padding:8px}
+.shots figcaption{font-size:12px;font-weight:700;color:var(--muted)}
+.arrow{font-size:24px;font-weight:800;color:var(--hi)}
+.res{background:var(--surface);border:1px solid var(--line);border-radius:22px;overflow:hidden}
+.sign{background:var(--c);color:#fff;padding:18px 16px 14px;position:relative}
+.sign::before,.sign::after{content:"";position:absolute;top:9px;width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.55)}
+.sign::before{left:12px}.sign::after{right:12px}
+.sign-main{display:flex;align-items:center;gap:14px}
+.sign-n{font-family:var(--display);font-weight:800;font-size:92px;line-height:.82;letter-spacing:-3px}
+.sign-l{display:block;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;opacity:.9}
+.sign-name{display:block;font-family:var(--display);font-weight:800;font-size:24px;line-height:1.08}
+.coords{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:14px}
+.coords div{background:rgba(255,255,255,.18);border-radius:12px;padding:7px 8px;text-align:center}
+.coords span{display:block;font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;opacity:.9}
+.coords b{font-family:var(--display);font-size:19px;line-height:1.15}
+.res-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:12px}
+.prod{display:flex;gap:12px;align-items:center}
+.thumb{width:66px;height:84px;flex:none}
+.pk svg,.thumb svg,.bigpack svg,.ta-img svg{width:100%;height:100%;display:block}
+.prod .info{flex:1;min-width:0}
+.prod h2{font-size:19px;line-height:1.15}
+.sub{color:var(--muted);font-size:14px}
+.pricetag{background:var(--tag);color:var(--tag-ink);border-radius:8px;padding:7px 10px 8px;text-align:right;box-shadow:0 3px 0 rgba(0,0,0,.14);transform:rotate(2deg);flex:none}
+.pricetag b{display:block;font-family:var(--display);font-size:26px;font-weight:800;line-height:1}
+.pricetag small{font-size:11px;font-weight:600;font-variant-numeric:tabular-nums}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;margin-top:3px}
+.badge::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.ok{color:var(--green)} .low{color:var(--amber)} .no{color:var(--red)}
+.sem{display:flex;gap:6px;flex-wrap:wrap}
+.sem span{font-size:11px;font-weight:800;padding:4px 8px;border-radius:6px;color:#fff;letter-spacing:.3px;text-transform:uppercase}
+.s-A{background:#d42a3c} .s-M{background:#f0a012;color:#1a1a1a!important} .s-B{background:#23914a}
+.btn{border:0;border-radius:14px;padding:12px 16px;font-weight:700;background:var(--brand);color:#fff;min-height:48px}
+.btn.big{width:100%;min-height:54px;font-size:17px}
+.btn.done{background:var(--soft);color:var(--brand-text)}
+.btn.ghost{background:var(--soft);color:var(--brand-text)}
+.out-alert{background:color-mix(in srgb,var(--red) 12%,var(--surface));border-radius:14px;padding:10px 12px;font-size:14px;display:flex;flex-direction:column;gap:8px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.map{width:100%;height:auto;display:block}
+details.more summary{cursor:pointer;font-weight:700;color:var(--brand-text);min-height:44px;display:flex;align-items:center}
+.tip{font-size:15px;background:var(--soft);border-radius:12px;padding:9px 12px}
+.alts{display:flex;flex-direction:column;gap:8px}
+.alt{display:grid;grid-template-columns:44px 1fr auto;gap:2px 10px;align-items:center;border:1px solid var(--line);border-radius:14px;padding:9px 11px;text-align:left;background:#f6f8f5;width:100%;min-height:64px}
+.alt.best{border-color:var(--green);border-width:2px}
+.alt.cur{background:var(--soft)}
+.alt .pk{grid-row:span 2;width:44px;height:56px}
+.alt .n{font-weight:600;font-size:15px;line-height:1.2;min-width:0}
+.alt .price{grid-row:span 2;font-size:16px}
+.alt .m{font-size:13px;color:var(--muted);min-width:0;line-height:1.5}
+.tagb{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#fff;background:#23914a;border-radius:4px;padding:1px 6px}
+.tagc{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 5px}
+.bot{display:flex;gap:10px;align-items:flex-start}
+.avatar{width:36px;height:36px;border-radius:12px;flex:none;background:var(--brand);display:grid;place-items:center;color:#fff}
+.answer{background:var(--soft);border-radius:4px 16px 16px 16px;padding:10px 13px;font-size:15px;white-space:pre-wrap;flex:1;min-width:0}
+.ask{display:flex;gap:8px}
+.ask input{flex:1;min-width:0;border:1.5px solid var(--line);background:var(--bg);border-radius:14px;padding:0 13px;font-size:16px;height:48px}
+.thinking{display:inline-block;animation:pulse 1.2s infinite;color:var(--brand-text)}
+@keyframes pulse{50%{opacity:.35}}
+
+/* Barra inferior */
+.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:center;gap:8px;z-index:8;
+  padding:6px max(12px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px))}
+.tabs button{flex:1;max-width:260px;border:0;background:none;min-height:54px;border-radius:14px;font-size:13px;font-weight:700;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;position:relative}
+.tabs button[aria-selected="true"]{color:var(--brand-text);background:var(--soft)}
+.tabs svg{width:23px;height:23px}
+.count{position:absolute;top:5px;left:calc(50% + 6px);background:var(--hi);color:#fff;border-radius:99px;min-width:19px;height:19px;font-size:11px;display:grid;place-items:center;padding:0 5px}
+
+/* Mi ruta */
+.route-h h2{font-size:26px;font-weight:800}
+.route-h p{color:var(--muted);font-size:15px}
+.prog{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin-top:8px}
+.prog i{display:block;height:100%;background:var(--green);border-radius:4px}
+.next{border-radius:20px;overflow:hidden;background:var(--surface);border:1px solid var(--line)}
+.next-top{background:var(--c);color:#fff;display:flex;align-items:center;gap:14px;padding:14px 16px}
+.next-top .sign-n{font-size:64px}
+.next-top small{display:block;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;opacity:.9}
+.next-top b{display:block;font-family:var(--display);font-size:20px;line-height:1.15}
+.next-top span{font-size:14px;opacity:.95}
+.next .btn{margin:12px;width:calc(100% - 24px)}
+.li{display:grid;grid-template-columns:44px 1fr auto 34px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.li:last-child{border-bottom:0}
+.li b{font-size:15px;font-weight:600}
+.li .sub{font-size:13px}
+.li.done b{text-decoration:line-through;color:var(--muted)}
+.chk{width:44px;height:44px;border-radius:50%;border:2px solid var(--line);background:none;font-size:20px;font-weight:800;color:transparent}
+.li.done .chk{background:var(--green);border-color:var(--green);color:#fff}
+.x{border:0;background:none;color:var(--muted);font-size:22px;height:44px}
+.total{display:flex;justify-content:space-between;align-items:center;font-weight:700;background:var(--tag);color:var(--tag-ink);border-radius:14px;padding:12px 14px}
+.total b{font-family:var(--display);font-size:24px;font-variant-numeric:tabular-nums}
+.empty{text-align:center;padding:16px 8px;display:flex;flex-direction:column;gap:12px;align-items:center;color:var(--muted)}
+
+/* Vista empresa */
+.pitch{background:var(--ink);color:var(--bg);border-radius:22px;padding:20px 18px}
+.pitch small{font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;opacity:.75}
+.pitch h2{font-size:28px;font-weight:800;line-height:1.08;margin-top:6px}
+.pitch p{margin-top:8px;font-size:15px;opacity:.9}
+.sw{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.sw button{width:46px;height:46px;border-radius:50%;border:3px solid var(--surface);background:var(--c);box-shadow:0 0 0 2px var(--line)}
+.sw button[aria-pressed="true"]{box-shadow:0 0 0 3px var(--ink)}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px}
+.kpi b{display:block;font-family:var(--display);font-size:28px;line-height:1.1;color:var(--brand-text);font-variant-numeric:tabular-nums}
+.kpi span{font-size:13px;color:var(--muted);line-height:1.25;display:block}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{text-align:left;padding:8px 4px;border-bottom:1px solid var(--line)}
+th{font-size:12px;color:var(--muted);font-weight:600}
+.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.barx{height:6px;border-radius:3px;background:var(--brand-text);margin-top:4px}
+.checks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+.checks li{display:grid;grid-template-columns:24px 1fr;gap:8px;font-size:15px}
+.checks li::before{content:"✓";width:22px;height:22px;border-radius:50%;background:var(--soft);color:var(--brand-text);font-weight:800;font-size:13px;display:grid;place-items:center;margin-top:1px}
+.steps{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:8px;font-size:15px}
+.steps b{font-weight:700}
+/* Bot */
+.fab{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(78px + env(safe-area-inset-bottom,0px));z-index:8;display:flex;align-items:center;gap:8px;border:0;border-radius:99px;background:var(--brand);color:#fff;padding:13px 18px;font-weight:700;font-size:15px;box-shadow:0 8px 20px rgba(0,0,0,.25)}
+.sheet{position:fixed;inset:0;z-index:30;background:rgba(10,20,14,.45);display:flex;align-items:flex-end;justify-content:center}
+.chat{background:#fff;width:100%;max-width:560px;height:min(90vh,740px);height:min(90dvh,740px);border-radius:22px 22px 0 0;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -8px 30px rgba(0,0,0,.2)}
+.chat-h{display:flex;align-items:center;gap:10px;padding:12px max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line)}
+.chat-h b{display:block;font-family:var(--display);font-size:18px}
+.chat-h small{color:var(--muted);font-size:13px}
+.chat-h .x{margin-left:auto;width:44px}
+.msgs{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px;overscroll-behavior:contain}
+.m{max-width:86%;padding:10px 13px;border-radius:16px;font-size:15px;white-space:pre-wrap;line-height:1.4}
+.m.u{align-self:flex-end;background:var(--brand);color:#fff;border-bottom-right-radius:4px}
+.m.b{align-self:flex-start;background:#eef2ee;border-bottom-left-radius:4px}
+.m.cards{max-width:100%;width:100%;padding:0;white-space:normal}
+.chip.act{border-color:var(--brand);color:var(--brand-text);font-weight:700}
+.qr{display:flex;gap:6px;overflow-x:auto;padding:8px 16px 4px;scrollbar-width:none}
+.qr .chip{white-space:nowrap;flex:none}
+.cin{display:flex;gap:8px;padding:8px 16px 12px;align-items:flex-end}
+.cin textarea{flex:1;min-width:0;resize:none;border:1.5px solid var(--line);border-radius:16px;padding:12px 13px;font:inherit;font-size:16px;line-height:1.35;max-height:140px;background:#f6f8f5}
+.cin .btn{height:48px;width:52px;padding:0;display:grid;place-items:center}
+.qty{font-weight:800;color:var(--brand-text)}
+@media (prefers-reduced-motion:reduce){.thinking{animation:none}}
+@media (max-width:380px){.sign-n{font-size:76px}.intro h2{font-size:24px}.cam span{display:none}}
+</style>
+
+<header class="bar"><div class="in">
+  <div class="bar-top">
+    <button class="brand" data-home aria-label="Ir al inicio">
+      <span class="logo" aria-hidden="true">P</span>
+      <span><b>PasilloYa</b><small>Súper Demo · Local Centro</small></span>
+    </button>
+    <button class="switch" id="vistaBtn" data-vista>Vista empresa ›</button>
+  </div>
+  <form id="f" class="sbox" role="search">
+    <label for="q" class="sr">Producto que buscas</label>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#74807a" stroke-width="2.4"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>
+    <input id="q" type="text" inputmode="search" enterkeyhint="search" placeholder="¿Qué buscas? Ej.: atún" autocomplete="off" autocapitalize="off">
+    <button type="button" id="clr" hidden aria-label="Borrar">×</button>
+    <input type="file" id="cam" accept="image/*" hidden>
+    <button type="button" class="cam" data-cam aria-label="Buscar con una foto">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Foto</span>
+    </button>
+  </form>
+  <div id="ta" class="ta" hidden></div>
+</div></header>
+
+<main class="in">
+  <!-- CLIENTE: buscar -->
+  <section id="v-buscar" class="stack">
+    <div id="home" class="stack">
+      <div class="intro">
+        <h2>Dime qué buscas y te llevo al <mark>estante exacto</mark>.</h2>
+        <p>Sin descargar nada. Sin registrarte.</p>
+      </div>
+      <div class="ways">
+        <button class="way" data-focus><i><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></i><b>Escribe</b><span>el nombre</span></button>
+        <button class="way" data-cam><i><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></i><b>Toma una foto</b><span>o pega una imagen</span></button>
+        <button class="way" data-bot="lista"><i><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg></i><b>Pega tu lista</b><span>de Notas o WhatsApp</span></button>
+      </div>
+      <div class="chips" id="sugg"></div>
+      <div class="label">Lo más buscado hoy</div>
+      <div class="tiles" id="top"></div>
+      <div id="promo"></div>
+      <div class="label">Pasillos del local</div>
+      <div class="dir" id="dir"></div>
+      <p class="fine">Demo con productos, marcas, precios y pasillos inventados.</p>
+    </div>
+    <div id="out" class="stack"></div>
+  </section>
+
+  <!-- CLIENTE: mi ruta -->
+  <section id="v-lista" class="stack" hidden></section>
+
+  <!-- EMPRESA -->
+  <section id="v-empresa" class="stack" hidden></section>
+</main>
+
+<nav class="tabs" id="tabs">
+  <button aria-selected="true" data-v="buscar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg>Buscar</button>
+  <button aria-selected="false" data-v="lista"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h2l2.5 11h10L20 8H7"/><circle cx="9" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/></svg>Mi ruta<span class="count" id="count" hidden>0</span></button>
+</nav>
+
+<button class="fab" id="fab" data-bot="chat"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h.01M12 10h.01M16 10h.01"/></svg>Asistente</button>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="chat" role="dialog" aria-modal="true" aria-labelledby="chatT">
+    <div class="chat-h"><div class="avatar" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 5h2l2.5 11h10L20 8H7"/><circle cx="9" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/></svg></div>
+      <div><b id="chatT">Asistente de compras</b><small>Pregunta o pega tu lista</small></div><button class="x" id="botX" aria-label="Cerrar">×</button></div>
+    <div class="msgs" id="msgs" aria-live="polite"></div>
+    <div class="qr" id="qr"></div>
+    <form class="cin" id="botF"><label for="bin" class="sr">Mensaje</label><textarea id="bin" rows="1" placeholder="Escribe o pega tu lista…"></textarea>
+      <button class="btn" type="submit" aria-label="Enviar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 12h15M13 6l6 6-6 6"/></svg></button></form>
+  </div>
+</div>
+
+<script>
+// ---------- Datos inventados del local ----------
+const PASILLOS={1:"Lácteos y huevos",2:"Panadería y desayuno",3:"Arroz, granos y pastas",4:"Salsas, aceites y condimentos",5:"Enlatados",6:"Snacks y dulces",7:"Bebidas",8:"Limpieza"};
+const COLOR={1:"#2563c9",2:"#d9741a",3:"#8a5a14",4:"#c2355c",5:"#0f8a8a",6:"#a8339a",7:"#1a8fd0",8:"#6a4fc4"};
+const NIVEL={1:"abajo",2:"a la altura de la cintura",3:"a la altura de los ojos",4:"arriba"};
+const ALTURA={1:"Abajo",2:"Cintura",3:"Ojos",4:"Arriba"};
+// id, nombre, marca, categoría, grupo, pasillo, lado(I/D), estante(A-D), nivel, precio, tamaño, unidad, semáforo azúcar/grasa/sal, stock, patrocinado, palabras
+const RAW=[
+["s1","Salsa de tomate","Huerta Andina","salsa de tomate","salsas",4,"D","C",3,1.85,400,"g","ABM",34,0,"ketchup salsa tomate"],
+["s2","Salsa de tomate clásica","Sabor Real","salsa de tomate","salsas",4,"D","C",3,2.10,397,"g","AMA",18,1,"ketchup salsa tomate"],
+["s3","Salsa de tomate sin azúcar añadida","Del Campo","salsa de tomate","salsas",4,"D","C",2,2.45,350,"g","BBM",6,0,"ketchup salsa tomate saludable"],
+["s4","Salsa de tomate","Súper Ahorro","salsa de tomate","salsas",4,"D","C",1,1.29,400,"g","ABM",50,0,"ketchup salsa tomate barata marca propia"],
+["s5","Pasta de tomate natural","Del Campo","salsa de tomate","salsas",4,"D","D",2,1.20,200,"g","BBB",0,0,"pasta tomate natural"],
+["m1","Mayonesa","Sabor Real","mayonesa","salsas",4,"D","B",3,2.60,400,"g","BAM",22,1,"mayonesa mayo"],
+["m2","Mayonesa light","Huerta Andina","mayonesa","salsas",4,"D","B",3,2.80,380,"g","BMM",9,0,"mayonesa light"],
+["a1","Aceite de girasol","Dorado Sol","aceite","aceites",4,"I","A",3,3.40,1000,"ml","BAB",40,0,"aceite girasol cocina"],
+["a2","Aceite de oliva extra virgen","Mediterra","aceite","aceites",4,"I","A",4,6.90,500,"ml","BAB",12,0,"aceite oliva"],
+["l1","Leche entera","Vaca Feliz","leche","lacteos",1,"I","B",2,1.05,1000,"ml","BMB",80,0,"leche entera"],
+["l2","Leche deslactosada","Vaca Feliz","leche","lacteos",1,"I","B",3,1.25,1000,"ml","BMB",45,0,"leche deslactosada sin lactosa"],
+["y1","Yogur natural sin azúcar","Pradera","yogur","lacteos",1,"D","C",3,2.90,1000,"g","BMB",14,0,"yogurt yogur natural"],
+["y2","Yogur sabor frutilla","Pradera","yogur","lacteos",1,"D","C",3,2.40,1000,"g","AMB",30,1,"yogurt yogur frutilla fresa"],
+["q1","Queso fresco","Pradera","queso","lacteos",1,"D","A",2,3.10,500,"g","BAM",16,0,"queso fresco"],
+["h1","Huevos (30 u.)","Granja Linda","huevos","lacteos",1,"I","D",2,4.20,30,"u","BMB",25,0,"huevos cubeta"],
+["r1","Arroz blanco","Grano de Oro","arroz","granos",3,"I","B",1,2.30,2000,"g","BBB",60,0,"arroz"],
+["r2","Arroz integral","Grano de Oro","arroz","granos",3,"I","B",2,2.10,1000,"g","BBB",11,0,"arroz integral saludable"],
+["f1","Fideo spaghetti","La Nonna","fideo","granos",3,"D","C",3,1.15,500,"g","BBB",55,0,"fideo tallarin spaghetti pasta"],
+["g1","Lenteja","Grano de Oro","granos","granos",3,"I","D",2,1.40,500,"g","BBB",20,0,"lenteja menestra"],
+["av","Avena en hojuelas","Andes Mañanero","avena","desayuno",2,"D","B",3,1.60,400,"g","BBB",33,0,"avena desayuno"],
+["p1","Pan integral de molde","Horno Real","pan","desayuno",2,"I","A",3,2.20,600,"g","MBM",15,0,"pan molde integral"],
+["c1","Cereal de chocolate","Crunchy","cereal","desayuno",2,"D","C",3,4.50,500,"g","AMM",19,1,"cereal desayuno niños"],
+["c2","Granola sin azúcar","Andes Mañanero","cereal","desayuno",2,"D","C",4,4.90,450,"g","BMB",7,0,"granola cereal saludable desayuno"],
+["t1","Atún en agua","Mar Azul","atún","enlatados",5,"I","B",3,1.95,170,"g","BBM",40,0,"atun lata"],
+["t2","Atún en aceite","Pescamar","atún","enlatados",5,"I","B",3,1.80,170,"g","BAM",52,1,"atun lata aceite"],
+["sa","Sardina en salsa de tomate","Pescamar","sardina","enlatados",5,"I","C",2,1.35,155,"g","BMA",28,0,"sardina lata"],
+["n1","Papas fritas","Crocantes","snack","snacks",6,"D","A",3,1.25,150,"g","BAA",44,1,"papitas papas snack"],
+["n2","Chifles horneados","Costa Verde","snack","snacks",6,"D","A",3,1.10,120,"g","BMM",21,0,"chifles platano snack"],
+["ch","Chocolate 70 % cacao","Cacao Fino","chocolate","snacks",6,"I","C",3,2.75,100,"g","MAB",18,0,"chocolate amargo"],
+["b1","Gaseosa cola","Burbuja","gaseosa","bebidas",7,"I","A",1,2.60,3000,"ml","ABB",35,1,"cola gaseosa cola refresco"],
+["b2","Gaseosa cola sin azúcar","Burbuja","gaseosa","bebidas",7,"I","A",2,2.70,3000,"ml","BBB",12,0,"cola gaseosa cero"],
+["b3","Agua sin gas","Manantial","agua","bebidas",7,"D","B",2,0.65,1000,"ml","BBB",90,0,"agua botella"],
+["b4","Jugo de naranja 100 %","Huerta Andina","jugo","bebidas",7,"D","D",3,2.80,1000,"ml","MBB",8,0,"jugo naranja"],
+["d1","Detergente en polvo","Blancura","detergente","limpieza",8,"I","B",1,6.50,2000,"g","BBB",17,0,"detergente ropa lavar"],
+["d2","Lavavajillas en crema","Brillo","lavavajillas","limpieza",8,"D","A",3,1.90,500,"g","BBB",26,0,"lavavajilla platos"]
+];
+const P=RAW.map(r=>({id:r[0],nombre:r[1],marca:r[2],cat:r[3],grupo:r[4],pasillo:r[5],lado:r[6],estante:r[7],nivel:r[8],precio:r[9],tam:r[10],u:r[11],sem:r[12],stock:r[13],spon:!!r[14],kw:r[15]}));
+const byId=Object.fromEntries(P.map(p=>[p.id,p]));
+
+// ---------- Utilidades ----------
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const norm=s=>s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+const money=n=>"$"+n.toFixed(2);
+const cvar=n=>`style="--c:${COLOR[n]}"`;
+const health=p=>[...p.sem].reduce((a,c)=>a+({A:2,M:1,B:0}[c]),0);
+const healthTxt=p=>health(p)<=1?"saludable":health(p)>=3?"alto en azúcar, grasa o sal":"intermedio";
+function unit(p){ if(p.u==="u") return money(p.precio/p.tam)+" c/u"; return money(p.precio/p.tam*100)+" /100 "+p.u }
+function stockTxt(p){ if(p.stock===0) return ["no","Agotado"]; if(p.stock<10) return ["low","Pocas unidades"]; return ["ok","Disponible"] }
+function semHtml(p){ const n=["azúcar","grasa","sal"], t={A:"Alto",M:"Medio",B:"Bajo"}; return '<div class="sem" aria-label="Semáforo nutricional">'+[...p.sem].map((c,i)=>`<span class="s-${c}">${t[c]} en ${n[i]}</span>`).join("")+"</div>" }
+const lugar=p=>`Lado ${p.lado==="D"?"derecho":"izquierdo"} · Estante ${p.estante} · ${ALTURA[p.nivel]}`;
+
+// ---------- Fotos del producto (dibujos del envase; en la app real van las fotos del catálogo del súper) ----------
+const CATCOL={"salsa de tomate":"#c8241b",mayonesa:"#efe0a0",aceite:"#e8b21c",leche:"#ffffff",yogur:"#ffffff",queso:"#fff6d6",huevos:"#f3e4c8",arroz:"#ffffff",fideo:"#f3c94b",granos:"#9b5a24",avena:"#e3c995",pan:"#c58a4a",cereal:"#7a3d1a","atún":"#d5dde4",sardina:"#d5dde4",snack:"#f4c430",chocolate:"#3d1f12",gaseosa:"#3a1b0e",agua:"#cfe9fb",jugo:"#f7931e",detergente:"#ffffff",lavavajillas:"#9fdc8a"};
+const TIPO={"salsa de tomate":"squeeze",mayonesa:"squeeze",aceite:"bottle",leche:"carton",yogur:"tub",queso:"tub",huevos:"eggs",arroz:"bag",fideo:"bag",granos:"bag",avena:"box",pan:"bag",cereal:"box","atún":"can",sardina:"can",snack:"bag",chocolate:"bar",gaseosa:"bottle",agua:"bottle",jugo:"carton",detergente:"box",lavavajillas:"tub"};
+const BRANDPAL=["#1f4fa8","#c0392b","#0b7a45","#7b3fa0","#d35400","#00838f","#8e244d","#2e7d32","#b8860b"];
+function brandColor(m){ let h=0; for(const c of m) h=(h*31+c.charCodeAt(0))>>>0; return BRANDPAL[h%BRANDPAL.length] }
+function pack(p,attrs=""){
+  const b=CATCOL[p.cat]||"#ddd", c=brandColor(p.marca), lab=esc(p.marca.split(" ")[0].toUpperCase().slice(0,8));
+  const tx=(y,fill="#fff",fs=6.5)=>`<text x="30" y="${y}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="${fill}" font-family="Inter,sans-serif">${lab}</text>`;
+  const band=(x,y,w,h)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}"/>`+tx(y+h/2+2.3);
+  let s="";
+  switch(TIPO[p.cat]){
+    case "can": s=`<rect x="8" y="34" width="44" height="36" rx="5" fill="${b}" stroke="#8a96a0"/><ellipse cx="30" cy="34" rx="22" ry="5" fill="#eef2f5" stroke="#8a96a0"/>`+band(8,44,44,16); break;
+    case "squeeze": s=`<path d="M14 12 Q14 4 22 4 H38 Q46 4 46 12 V62 Q46 68 38 68 H22 Q14 68 14 62Z" fill="${b}" stroke="rgba(0,0,0,.25)"/><rect x="22" y="68" width="16" height="9" rx="2" fill="${c}"/>`+band(14,28,32,18); break;
+    case "bottle": s=`<rect x="25" y="3" width="10" height="9" rx="2" fill="${c}"/><path d="M25 12 H35 L44 24 V72 Q44 77 39 77 H21 Q16 77 16 72 V24Z" fill="${b}" stroke="rgba(0,0,0,.25)"/>`+band(16,38,28,16); break;
+    case "carton": s=`<polygon points="14,18 30,7 46,18" fill="#e3e3e3" stroke="#bbb"/><rect x="14" y="18" width="32" height="59" fill="${b}" stroke="#bbb"/>`+band(14,32,32,20)+`<circle cx="30" cy="64" r="6" fill="${c}" opacity=".35"/>`; break;
+    case "box": s=`<rect x="10" y="6" width="40" height="70" rx="3" fill="${c}"/>`+tx(22)+`<circle cx="30" cy="50" r="13" fill="${b}" stroke="#fff" stroke-width="2"/>`; break;
+    case "bag": s=`<path d="M12 12 L18 7 L24 12 L30 7 L36 12 L42 7 L48 12 V72 Q48 77 43 77 H17 Q12 77 12 72Z" fill="${c}"/>`+tx(26)+`<ellipse cx="30" cy="52" rx="12" ry="11" fill="${b}" stroke="#fff" stroke-width="2"/>`; break;
+    case "tub": s=`<rect x="9" y="26" width="42" height="7" rx="2" fill="${c}"/><path d="M12 33 H48 L44 74 H16Z" fill="${b}" stroke="#bbb"/>`+band(14,44,32,15); break;
+    case "eggs": s=`<rect x="5" y="36" width="50" height="30" rx="4" fill="#cdb183"/>`+[12,24,36,48].map(x=>`<ellipse cx="${x}" cy="36" rx="5.5" ry="7" fill="${b}" stroke="#b89a6a"/>`).join("")+band(5,50,50,12); break;
+    case "bar": s=`<rect x="6" y="24" width="48" height="40" rx="3" fill="${c}"/><rect x="6" y="38" width="48" height="12" fill="${b}"/>`+tx(33); break;
+    default: s=`<rect x="12" y="10" width="36" height="64" rx="6" fill="${c}"/>`+tx(42);
+  }
+  return `<svg viewBox="0 0 60 80" ${attrs} role="img" aria-label="Foto de ${esc(p.nombre)} ${esc(p.marca)}"><ellipse cx="30" cy="78" rx="20" ry="2.5" fill="rgba(0,0,0,.12)"/>${s}</svg>`;
+}
+
+// ---------- La percha: en qué puesto exacto está ----------
+function shelfSvg(p){
+  const W=320,H=196,x0=34,cw=68,ch=34,yTop=26, cols=["A","B","C","D"], col=COLOR[p.pasillo];
+  let s=`<svg class="map" viewBox="0 0 ${W} ${H}" role="img" aria-label="Percha: estante ${p.estante}, nivel ${p.nivel}">`;
+  s+=`<rect x="${x0-6}" y="${yTop-6}" width="${cw*4+12}" height="${ch*4+14}" rx="6" fill="${col}" opacity=".16"/>`;
+  cols.forEach((L,i)=>{ s+=`<text x="${x0+i*cw+cw/2}" y="${yTop-10}" text-anchor="middle" font-size="12" font-weight="800" fill="var(--muted)" font-family="Bricolage Grotesque,sans-serif">Estante ${L}</text>` });
+  for(let lv=4;lv>=1;lv--){ const y=yTop+(4-lv)*ch;
+    s+=`<text x="${x0-12}" y="${y+ch/2+4}" text-anchor="end" font-size="11" font-weight="700" fill="var(--muted)">${lv}</text>`;
+    cols.forEach((L,i)=>{ const x=x0+i*cw, on=(L===p.estante&&lv===p.nivel);
+      if(!on) for(let k=0;k<5;k++) s+=`<rect x="${x+5+k*12}" y="${y+8+(k%2)*3}" width="9" height="${ch-12-(k%2)*3}" rx="2" fill="var(--rack)"/>`;
+      else s+=`<rect x="${x+1}" y="${y+1}" width="${cw-2}" height="${ch-3}" rx="5" fill="var(--surface)" stroke="var(--hi)" stroke-width="3"/>`+pack(p,`x="${x+cw/2-13}" y="${y+1}" width="26" height="${ch-3}"`);
+    });
+    s+=`<rect x="${x0-4}" y="${y+ch-3}" width="${cw*4+8}" height="4" rx="1" fill="${col}"/>`;
+  }
+  const yb=yTop+4*ch+16, px=x0+cols.indexOf(p.estante)*cw+cw/2;
+  s+=`<path d="M${px-7} ${yb+8} L${px} ${yb-2} L${px+7} ${yb+8}Z" fill="var(--hi)"/>`;
+  s+=`<text x="${W/2}" y="${yb+22}" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">Estante ${p.estante} · nivel ${p.nivel} (${NIVEL[p.nivel]})</text>`;
+  return s+"</svg>";
+}
+
+// ---------- Mapa del local ----------
+function mapSvg(pins){
+  const W=340,H=226, x0=24, gap=38, rw=20, yTop=38, yBot=170;
+  const yEst={A:152,B:120,C:86,D:54};
+  let s=`<svg class="map" viewBox="0 0 ${W} ${H}" role="img" aria-label="Mapa del local">`;
+  s+=`<rect x="4" y="4" width="${W-8}" height="${H-8}" rx="16" fill="var(--bg)" stroke="var(--line)"/>`;
+  const hiA=new Set(pins.map(p=>p.pasillo));
+  for(let i=1;i<=8;i++){
+    const x=x0+(i-1)*gap+10, on=hiA.has(i), c=on?COLOR[i]:"var(--rack)";
+    s+=`<rect x="${x-rw/2-7}" y="${yTop}" width="7" height="${yBot-yTop}" rx="3" fill="${c}"/>`;
+    s+=`<rect x="${x+rw/2}" y="${yTop}" width="7" height="${yBot-yTop}" rx="3" fill="${c}"/>`;
+    if(on) s+=`<rect x="${x-rw/2}" y="${yTop}" width="${rw}" height="${yBot-yTop}" rx="4" fill="${COLOR[i]}" opacity=".16"/>`;
+    s+=`<rect x="${x-12}" y="${yTop-26}" width="24" height="18" rx="5" fill="${COLOR[i]}" opacity="${on?1:.55}"/>`;
+    s+=`<text x="${x}" y="${yTop-12.5}" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="12" fill="#fff">${i}</text>`;
+  }
+  s+=`<rect x="${W/2-44}" y="${H-26}" width="88" height="18" rx="9" fill="#ffd83a"/><text x="${W/2}" y="${H-13.5}" text-anchor="middle" font-size="10" font-weight="800" fill="#1a1a1a">ENTRADA · QR</text>`;
+  pins.forEach((p,k)=>{
+    const ax=x0+(p.pasillo-1)*gap+10, px=ax+(p.lado==="D"?7:-7), py=yEst[p.estante];
+    if(k===0) s+=`<path d="M${W/2} ${H-28} L${W/2} ${yBot+13} L${ax} ${yBot+13} L${ax} ${py}" fill="none" stroke="var(--hi)" stroke-width="3" stroke-dasharray="6 5" stroke-linecap="round"/>`;
+    s+=`<circle cx="${px}" cy="${py}" r="${k===0?13:0}" fill="var(--hi)" opacity=".25"/><circle cx="${px}" cy="${py}" r="8" fill="var(--hi)" stroke="#fff" stroke-width="2.5"/>`;
+    if(pins.length>1) s+=`<text x="${px}" y="${py+3.5}" text-anchor="middle" font-size="9" font-weight="800" fill="#fff">${k+1}</text>`;
+  });
+  return s+"</svg>";
+}
+
+// Registro de búsquedas (para la vista empresa)
+const LOG={total:0,sinResultado:[],top:{}};
+function logSearch(q,p){ LOG.total++; if(p){LOG.top[p.nombre]=(LOG.top[p.nombre]||0)+1} else if(q){LOG.sinResultado.unshift(q)} }
+
+// ---------- IA (si el visor la permite) ----------
+let AI=null, AIimg=false;
+(async()=>{
+  try{ AI = window.claude?.use ? await window.claude.use("sample") : null }catch(e){ AI=null }
+  if(AI){ try{ const l=await AI.limits(); AIimg=!!l?.images }catch(e){} }
+})();
+const CATALOGO=P.map(p=>`${p.id}|${p.nombre}|${p.marca}|${p.tam}${p.u}|$${p.precio}|pasillo ${p.pasillo}|azúcar-grasa-sal ${p.sem}|stock ${p.stock}${p.spon?"|patrocinado":""}`).join("\n");
+async function askAI(texto,{foto=null,actual=null}={}){
+  const ctx=actual?`\nEl cliente está viendo: ${actual.id} (${actual.nombre} ${actual.marca}).`:"";
+  const pide=foto?"El cliente envió una FOTO de un producto que quiere comprar. Identifica cuál es del catálogo (o el más parecido).":`El cliente escribió: "${texto}".`;
+  const prompt=`Eres el asistente de compras de un supermercado en Ecuador. Hablas en español sencillo y amable.
+Catálogo del local (id|producto|marca|tamaño|precio|pasillo|semáforo nutricional azúcar-grasa-sal con A=alto M=medio B=bajo|stock|patrocinado):
+${CATALOGO}
+${pide}${ctx}
+Responde SOLO con JSON: {"id":"id del producto que busca, o null","ids":["hasta 3 ids de alternativas útiles para lo que pide"],"respuesta":"máximo 3 frases: qué le recomiendas, con precio y el motivo"}.
+Usa solo ids del catálogo. Si hay un producto patrocinado que sirva, puedes incluirlo, pero sé honesto sobre precio y salud. Si algo está agotado, dilo.`;
+  const opts={modelTier:"quick"}; if(foto) opts.images=[foto];
+  return AI.json(prompt,opts);
+}
+function aiErr(e){ const c=e&&e.code; if(c==="not_granted"||c==="sampling_disabled"){ AI=null; return "El asistente con IA no está permitido en esta vista. El buscador normal sigue funcionando." }
+  if(c==="rate_limited") return "Muchas consultas seguidas. Espera un momento y vuelve a intentar."; if(c==="image_rejected") return "No se pudo leer esa foto. Prueba con otra más cercana al producto.";
+  return "No se pudo consultar al asistente ahora. Intenta de nuevo." }
+const idsToP=l=>(l||[]).map(i=>byId[i]).filter(Boolean);
+
+// ---------- Búsqueda ----------
+const stem=w=>w.length>4&&w.endsWith("es")?w.slice(0,-2):w.length>3&&w.endsWith("s")?w.slice(0,-1):w;
+function localFind(q){
+  const w=norm(q).split(/\s+/).filter(x=>x.length>2); if(!w.length) return null;
+  let best=null,bs=0;
+  const nq=w.map(stem).join(" ");
+  for(const p of P){ const hay=norm(p.nombre+" "+p.marca+" "+p.cat+" "+p.kw); let s=0; for(const x of w){ if(hay.includes(x)) s+=1; else if(hay.includes(stem(x))||hay.includes(x.slice(0,-1))) s+=.8 } s=s/w.length;
+    if(s<.75) continue;
+    // Si dice «aceite», gana el aceite de cocina y no el «atún en aceite»: pesa más la categoría y el inicio del nombre.
+    s+=(norm(p.cat)===nq?.5:0)+(norm(p.nombre).startsWith(stem(w[0]))?.3:0);
+    if(s>bs||(s===bs&&best&&p.spon&&!best.spon)){bs=s;best=p} }
+  return best;
+}
+function sugerir(q){
+  const t=norm(q).trim(); if(t.length<2) return [];
+  const w=t.split(/\s+/);
+  return P.map(p=>{ const hay=norm(p.nombre+" "+p.marca+" "+p.cat+" "+p.kw), words=hay.split(/\s+/); let s=0;
+    for(const x of w){ if(words.some(h=>h.startsWith(x)||h.startsWith(stem(x)))) s+=2; else if(hay.includes(x)) s+=1; else return null }
+    return {p,s:s+(p.spon?.1:0)+(p.stock?0:-1)} }).filter(Boolean).sort((a,b)=>b.s-a.s).slice(0,4).map(x=>x.p);
+}
+const hallar=q=>localFind(q)||sugerir(q)[0]||null;
+const partes=q=>q.split(/[,;\n]+/).map(s=>s.trim()).filter(Boolean);
+function hideTa(){ $("#ta").hidden=true }
+function renderTa(q){
+  const box=$("#ta"); if(q.trim().length<2){ box.hidden=true; return }
+  box.innerHTML=sugerir(q).map(p=>`<button type="button" class="ta-i" data-id="${p.id}" ${cvar(p.pasillo)}><span class="ta-img">${pack(p)}</span><span class="ta-n"><b>${esc(p.nombre)}</b><small>${esc(p.marca)} · ${money(p.precio)}</small></span><span class="mini">Pasillo ${p.pasillo}</span></button>`).join("")
+    +`<button type="button" class="ta-i ta-all" data-submit="1">Buscar “${esc(q.trim())}”</button>`;
+  box.hidden=false;
+}
+let actual=null, fotoUsuario=null, aviso="", orden="rec";
+async function buscar(q){
+  q=q.trim(); if(!q) return; hideTa(); $("#q").blur(); fotoUsuario=null; ir("buscar");
+  const items=extraer(q);
+  if(items.filter(x=>x.p).length>1) return armarLista(items);
+  const nota=aviso; aviso="";
+  const p=hallar(q);
+  if(p){ logSearch(q,p); return mostrar(p,nota) }
+  if(AI){
+    cargando("Buscando “"+esc(q)+"”");
+    try{ const r=await askAI(q); const f=byId[r.id]; logSearch(q,f); if(f) mostrar(f,r.respuesta); else sinResultado(q,r.respuesta,idsToP(r.ids)) }
+    catch(e){ sinResultado(q,aiErr(e),[]) }
+  } else { logSearch(q,null); sinResultado(q,"",[]) }
+}
+const BACK=`<button class="back" data-home>‹ Inicio</button>`;
+const AV=`<div class="avatar" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 5h2l2.5 11h10L20 8H7"/><circle cx="9" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/></svg></div>`;
+function pintar(html){ $("#home").hidden=true; $("#out").innerHTML=html; scrollTo(0,0) }
+function cargando(t){ pintar(`<div class="card"><p><span class="thinking">●</span> ${t}…</p></div>`) }
+function sinResultado(q,msg,alts){
+  pintar(`${BACK}<div class="card"><h3>No encontramos “${esc(q)}” en este local</h3>
+  ${msg?`<div class="bot">${AV}<div class="answer">${esc(msg)}</div></div>`:`<p class="sub">Quedó anotado: el supermercado verá que lo buscaste. Prueba con otra palabra o toma una foto.</p>`}
+  ${alts.length?`<div class="label">Te puede servir</div><div class="alts">${alts.map(a=>altHtml(a)).join("")}</div>`:""}
+  <button class="btn ghost" data-home>Buscar otra cosa</button></div>`);
+}
+function altHtml(a,o={}){ const [k,t]=stockTxt(a);
+  return `<button class="alt${o.best?" best":""}${o.cur?" cur":""}" data-id="${a.id}" ${cvar(a.pasillo)}><span class="pk">${pack(a)}</span><span class="n">${esc(a.nombre)} · ${esc(a.marca)} ${o.best?'<span class="tagb">Mejor opción</span>':""}${o.cur?'<span class="tagc">Lo estás viendo</span>':""}${a.spon?'<span class="spon">Patrocinado</span>':""}</span><span class="price">${money(a.precio)}</span><span class="m"><span class="mini">Pasillo ${a.pasillo}</span> ${unit(a)} · ${healthTxt(a)}${k==="ok"?"":` · <b class="${k}">${t}</b>`}</span></button>` }
+function signHtml(p){ return `<div class="sign"><div class="sign-main"><span class="sign-n">${p.pasillo}</span><div><span class="sign-l">Pasillo</span><span class="sign-name">${PASILLOS[p.pasillo]}</span></div></div>
+  <div class="coords"><div><span>Lado</span><b>${p.lado==="D"?"Derecho":"Izquierdo"}</b></div><div><span>Estante</span><b>${p.estante}</b></div><div><span>Altura</span><b>${ALTURA[p.nivel]}</b></div></div></div>` }
+
+function mostrar(p,msg){
+  actual=p; orden="rec"; hideTa(); $("#q").blur();
+  const [k,t]=stockTxt(p), enLista=lista.includes(p.id), same=P.filter(x=>x.cat===p.cat);
+  const sust=p.stock===0?(same.find(x=>x.stock>0&&x.id!==p.id)||P.find(x=>x.grupo===p.grupo&&x.stock>0&&x.id!==p.id)):null;
+  pintar(`${BACK}
+  ${msg?`<div class="note">${esc(msg)}</div>`:""}
+  ${fotoUsuario?`<div class="shots" ${cvar(p.pasillo)}><figure><img src="${fotoUsuario}" alt="Tu foto"><figcaption>Tu foto</figcaption></figure><span class="arrow" aria-hidden="true">→</span><figure><div class="bigpack">${pack(p)}</div><figcaption>Lo tenemos aquí</figcaption></figure></div>`:""}
+  <article class="res" ${cvar(p.pasillo)}>
+    ${signHtml(p)}
+    <div class="res-body">
+      <div class="prod"><div class="thumb">${pack(p)}</div>
+        <div class="info"><h2>${esc(p.nombre)}</h2><div class="sub">${esc(p.marca)} · ${p.tam} ${p.u}</div><span class="badge ${k}">${t}</span></div>
+        <div class="pricetag"><b>${money(p.precio)}</b><small>${unit(p)}</small></div></div>
+      ${sust?`<div class="out-alert"><b>Hoy está agotado. Te puede servir este:</b>${altHtml(sust)}</div>`:""}
+      ${semHtml(p)}
+      <button class="btn big${enLista?" done":""}" id="addBtn">${enLista?"✓ En tu ruta · ver mi ruta":"Agregar a mi ruta"}</button>
+    </div>
+  </article>
+  <section class="card"><h3>Así lo ves en la percha</h3>${shelfSvg(p)}
+    <details class="more"><summary>Ver el mapa del local</summary>${mapSvg([p])}</details></section>
+  <section class="card" ${cvar(p.pasillo)}>${same.length>1
+    ?`<h3>Compara antes de llevar</h3><div class="chips" id="seg"><button class="chip" data-ord="rec" aria-selected="true">Todas</button><button class="chip" data-ord="barato" aria-selected="false">Más barata</button><button class="chip" data-ord="sano" aria-selected="false">Más saludable</button><button class="chip" data-ord="rinde" aria-selected="false">Rinde más</button></div><p class="tip" id="tip"></p><div class="alts" id="alts"></div>`
+    :`<h3>También en esta sección</h3><div class="alts" id="alts">${P.filter(x=>x.grupo===p.grupo&&x.id!==p.id).slice(0,4).map(a=>altHtml(a)).join("")}</div>`}</section>
+  <section class="card"><h3>Pregúntale al asistente</h3>
+    <div class="bot">${AV}<div class="answer" id="ans">${esc(saludo(p))}</div></div>
+    <div class="chips"><button class="chip" data-ask="combina">¿Con qué lo combino?</button><button class="chip" data-q="¿Cuál me recomiendas para niños?">¿Cuál recomiendas para niños?</button></div>
+    <form class="ask" id="chatF"><label for="chatQ" class="sr">Tu pregunta</label><input id="chatQ" placeholder="Ej.: ¿cuál tiene menos sal?" autocomplete="off"><button class="btn" type="submit">Enviar</button></form>
+  </section>`);
+  if(same.length>1) ordenar(p,"rec");
+}
+function saludo(p){ return `Está en el pasillo ${p.pasillo}, estante ${p.estante}, ${NIVEL[p.nivel]}. Pregúntame lo que quieras antes de llevarlo.` }
+function ordenar(p,ord){
+  orden=ord; const same=P.filter(x=>x.cat===p.cat);
+  const f={rec:(a,b)=>(b.spon-a.spon)||(a.precio-b.precio),barato:(a,b)=>a.precio-b.precio,sano:(a,b)=>health(a)-health(b)||a.precio-b.precio,rinde:(a,b)=>a.precio/a.tam-b.precio/b.tam}[ord];
+  const l=[...same].sort((a,b)=>((a.stock===0)-(b.stock===0))||f(a,b)), m=l[0];
+  const bajos=["azúcar","grasa","sal"].filter((_,i)=>m.sem[i]==="B").join(", ");
+  $("#tip").textContent={rec:`Hay ${same.length} opciones de ${p.cat} en este local. Toca un filtro para comparar.`,
+    barato:`La más barata: ${m.nombre} de ${m.marca}, a ${money(m.precio)}.`,
+    sano:`La más saludable: ${m.nombre} de ${m.marca}${bajos?` (bajo en ${bajos})`:""}.`,
+    rinde:`La que más rinde: ${m.nombre} de ${m.marca}, a ${unit(m)}.`}[ord];
+  $("#alts").innerHTML=l.map((a,i)=>altHtml(a,{best:ord!=="rec"&&i===0,cur:a.id===p.id})).join("");
+  document.querySelectorAll("#seg .chip").forEach(b=>b.setAttribute("aria-selected",b.dataset.ord===ord));
+}
+function verPasillo(n){
+  const items=P.filter(p=>p.pasillo===n).sort((a,b)=>a.estante.localeCompare(b.estante)); hideTa();
+  pintar(`${BACK}<article class="res" ${cvar(n)}><div class="sign"><div class="sign-main"><span class="sign-n">${n}</span><div><span class="sign-l">Pasillo</span><span class="sign-name">${PASILLOS[n]}</span></div></div></div>
+  <div class="res-body"><div class="alts">${items.map(a=>altHtml(a)).join("")}</div></div></article>`);
+}
+function combina(p){ const m={salsas:["f1","r1"],aceites:["r1","g1"],lacteos:["av","p1"],granos:["s3","a1"],desayuno:["l1","y1"],enlatados:["r1","s1"],snacks:["b3","b2"],bebidas:["n2","ch"],limpieza:["d2","d1"]}[p.grupo]||[];
+  const s=m.map(i=>byId[i]).filter(x=>x&&x.id!==p.id); return [`Suele llevarse con ${s.map(x=>x.nombre.toLowerCase()).join(" y ")}.`,s] }
+async function preguntar(texto,tipo){
+  const p=actual; if(!p) return; const ans=$("#ans"), box=$("#alts"), same=P.filter(x=>x.cat===p.cat).length>1;
+  const local=k=>{ if(k==="combina"||!same){ const [m,l]=combina(p); ans.textContent=m; if($("#tip")) $("#tip").textContent="Para acompañar:"; box.innerHTML=l.map(a=>altHtml(a)).join(""); document.querySelectorAll("#seg .chip").forEach(b=>b.setAttribute("aria-selected","false")) } else { ordenar(p,k); ans.textContent=$("#tip").textContent } };
+  if(tipo==="combina") return local("combina");
+  if(!AI){ const t=norm(texto); local(/barat|precio|economic|ahorr/.test(t)?"barato":/rinde|cantidad|gramo|kilo/.test(t)?"rinde":/combin|acompa/.test(t)?"combina":"sano"); ans.textContent+=" (Modo demo: con el asistente conectado responde cualquier pregunta.)"; return }
+  ans.innerHTML='<span class="thinking">●</span> Pensando…';
+  try{ const r=await askAI(texto,{actual:p}); ans.textContent=r.respuesta||"Listo."; const l=idsToP(r.ids); if(l.length){ if($("#tip")) $("#tip").textContent="Sugerencias del asistente:"; box.innerHTML=l.map(a=>altHtml(a,{cur:a.id===p.id})).join(""); document.querySelectorAll("#seg .chip").forEach(b=>b.setAttribute("aria-selected","false")) } }
+  catch(e){ ans.textContent=aiErr(e) }
+}
+
+// ---------- Foto, imagen pegada o enlace ----------
+function urlPalabras(u){ try{ const x=new URL(u); const parts=decodeURIComponent(x.pathname+" "+x.search).split(/[\/?&=]+/);
+  const w=parts.flatMap(s=>s.replace(/\.(jpe?g|png|webp|gif|avif|html?|php|aspx?)$/i,"").split(/[-_+.\s]+/))
+   .filter(s=>s.length>2&&!/^\d+$/.test(s)&&!/^(www|com|http|https|img|image|images|imagen|producto|productos|product|products|media|cdn|files|upload|uploads|catalog|static|thumb|large|small|width|height|format|auto|webp|jpg|png)$/i.test(s)&&!/^[a-f0-9]{8,}$/i.test(s));
+  return [...new Set(w.map(s=>s.toLowerCase()))].slice(0,6).join(" ") }catch(e){ return "" } }
+async function handleFoto(f){
+  try{ if(fotoUsuario) URL.revokeObjectURL(fotoUsuario) }catch(e){}
+  let url=null; try{ url=URL.createObjectURL(f) }catch(e){}
+  ir("buscar"); hideTa();
+  if(!(AI&&AIimg)){ fotoUsuario=url; return fotoDemo("Recibí tu imagen. En esta vista el reconocimiento de fotos no está conectado; elige qué producto era para ver cómo responde:") }
+  cargando("Reconociendo el producto de tu foto");
+  try{ const r=await askAI("",{foto:f}); const p=byId[r.id]; logSearch("(foto)",p); fotoUsuario=url; if(p) mostrar(p,r.respuesta); else sinResultado("el producto de la foto",r.respuesta,idsToP(r.ids)) }
+  catch(err){ sinResultado("el producto de la foto",aiErr(err),[]) }
+}
+function fotoDemo(txt){
+  pintar(`${BACK}<div class="card"><h3>Buscar con una foto</h3><p class="sub">${txt}</p>
+  <div class="alts">${["s1","t2","y2","b1"].map(i=>byId[i]).map(p=>`<button class="alt" data-foto="${p.id}" ${cvar(p.pasillo)}><span class="pk">${pack(p)}</span><span class="n">${esc(p.nombre)} · ${esc(p.marca)}</span><span></span><span class="m">Toca para simular la foto</span></button>`).join("")}</div></div>`);
+}
+$("#cam").onchange=e=>{ const f=e.target.files[0]; e.target.value=""; if(f) handleFoto(f) };
+document.addEventListener("paste",e=>{
+  const cd=e.clipboardData; if(!cd) return;
+  const img=[...cd.files||[]].find(f=>f.type.startsWith("image/"));
+  if(img){ e.preventDefault(); return handleFoto(img) }
+  if(e.target.id==="chatQ"||e.target.closest?.("#sheet")) return;
+  const t=(cd.getData("text")||"").trim();
+  if(/^https?:\/\/\S+$/i.test(t)){ e.preventDefault(); const w=urlPalabras(t);
+    if(w){ $("#q").value=w; aviso=`Leí el enlace y busqué “${w}”.`; buscar(w) }
+    else sinResultado("ese enlace","No pude sacar el nombre del producto de ese enlace. Copia la imagen (mantenla presionada y elige «Copiar») y pégala aquí.",[]) }
+  else if(extraer(t).filter(x=>x.p).length>1){ e.preventDefault(); buscar(t) }
+});
+document.addEventListener("dragover",e=>e.preventDefault());
+document.addEventListener("drop",e=>{ const f=[...(e.dataTransfer?.files||[])].find(f=>f.type.startsWith("image/")); e.preventDefault(); if(f) handleFoto(f) });
+
+// ---------- Mi ruta ----------
+let lista=[], hechos=[], cant={}, avisoLista="";
+try{ const s=JSON.parse(localStorage.getItem("pasilloya-ruta")||"{}"); lista=(s.l||[]).filter(i=>byId[i]); hechos=(s.h||[]).filter(i=>lista.includes(i)); cant=s.c||{} }catch(e){}
+function guardar(){ try{localStorage.setItem("pasilloya-ruta",JSON.stringify({l:lista,h:hechos,c:cant}))}catch(e){}
+  const c=$("#count"), n=lista.length-hechos.length; c.hidden=!n; c.textContent=n }
+// items = [{txt, p, qty}] (sale de extraer() en bot.js)
+function armarLista(items,{quedarse=false}={}){
+  const no=[]; let n=0;
+  for(const {txt,p,qty} of items){ if(p){ if(!lista.includes(p.id)) lista.push(p.id); if(qty>1) cant[p.id]=qty; hechos=hechos.filter(i=>i!==p.id); n++; logSearch(txt,p) } else { no.push(txt); logSearch(txt,null) } }
+  avisoLista=`Encontré ${n} de ${items.length} productos y ordené tu ruta.`+(no.length?` No hay en este local: ${no.join(", ")}.`:"");
+  $("#q").value=""; $("#clr").hidden=true; guardar(); if(!quedarse) ir("lista");
+}
+function renderLista(){
+  const items=lista.map(i=>byId[i]).sort((a,b)=>a.pasillo-b.pasillo||a.estante.localeCompare(b.estante));
+  const pend=items.filter(p=>!hechos.includes(p.id)), done=items.length-pend.length, next=pend[0];
+  const tot=items.reduce((s,p)=>s+p.precio*(cant[p.id]||1),0), nPas=new Set(items.map(p=>p.pasillo)).size;
+  const nota=avisoLista; avisoLista="";
+  if(!items.length){ $("#v-lista").innerHTML=`<div class="route-h"><h2>Mi ruta</h2></div><div class="card"><div class="empty"><p>Agrega lo que vas a comprar y te ordeno el recorrido por pasillos, para que no des vueltas.</p>
+    <button class="btn" data-bot="lista">Pegar mi lista de Notas o WhatsApp</button><button class="btn ghost" data-v="buscar">Buscar un producto</button></div></div>`; return }
+  $("#v-lista").innerHTML=`<div class="route-h"><h2>Mi ruta</h2><p>${items.length} productos · ${nPas} ${nPas===1?"pasillo":"pasillos"} · ${done} de ${items.length} en el carrito</p><div class="prog"><i style="width:${done/items.length*100}%"></i></div></div>
+  ${nota?`<div class="note">${esc(nota)}</div>`:""}
+  ${next?`<div class="next" ${cvar(next.pasillo)}><div class="next-top"><span class="sign-n">${next.pasillo}</span><div><small>Siguiente parada</small><b>${esc(next.nombre)}${cant[next.id]>1?` ×${cant[next.id]}`:""}</b><span>${lugar(next)}</span></div></div>
+    <button class="btn big" data-hecho="${next.id}">✓ Ya lo tengo</button></div>`
+   :`<div class="note"><b>¡Listo! Ya tienes todo.</b> Total aproximado: ${money(tot)}. Puedes pasar a caja.</div>`}
+  ${pend.length?`<div class="card"><h3>Tu recorrido</h3>${mapSvg(pend)}</div>`:""}
+  <div class="card"><div>${items.map(p=>{ const d=hechos.includes(p.id); return `<div class="li${d?" done":""}" ${cvar(p.pasillo)}><button class="chk" data-hecho="${p.id}" aria-label="${d?"Desmarcar":"Marcar como listo"}">✓</button><div style="min-width:0"><b>${esc(p.nombre)}${cant[p.id]>1?` <span class="qty">×${cant[p.id]}</span>`:""}</b><div class="sub"><span class="mini">Pasillo ${p.pasillo}</span> ${esc(p.marca)} · Estante ${p.estante} · ${ALTURA[p.nivel]}</div></div><span class="n">${money(p.precio)}</span><button class="x" data-del="${p.id}" aria-label="Quitar de la ruta">×</button></div>` }).join("")}</div>
+  <div class="total"><span>Total aproximado</span><b>${money(tot)}</b></div>
+  <button class="btn ghost" data-v="buscar">Agregar más productos</button></div>`;
+}
+
+// ---------- Vista empresa (cifras de ejemplo + lo que busques en esta demo) ----------
+const MARCAS=[["Verde","#0a7d47"],["Rojo","#c8102e"],["Azul","#0b4ea2"],["Naranja","#c9540a"]];
+let marca=MARCAS[0][1];
+try{ const m=localStorage.getItem("pasilloya-marca"); if(m&&MARCAS.some(x=>x[1]===m)) marca=m }catch(e){}
+function setMarca(c){ marca=c; document.documentElement.style.setProperty("--brand",c); try{localStorage.setItem("pasilloya-marca",c)}catch(e){} }
+function renderEmpresa(){
+  const row=(n,v,max,now)=>`<tr><td>${esc(n)}${now?' <span class="spon">Ahora</span>':""}<div class="barx" style="width:${Math.max(5,Math.round(v/max*100))}%"></div></td><td class="n">${v}</td></tr>`;
+  const top=Object.entries(LOG.top).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  $("#v-empresa").innerHTML=`<div class="pitch"><small>Vista para la cadena · cifras de ejemplo</small><h2>Sus clientes encuentran todo. Su local vende más.</h2><p>Un QR en la entrada y en los carritos. Sin app que descargar y con la marca de su cadena.</p></div>
+  <div class="card"><h3>Véalo con los colores de su marca</h3><div class="sw">${MARCAS.map(([n,c])=>`<button data-brand="${c}" style="--c:${c}" aria-label="${n}" aria-pressed="${c===marca}"></button>`).join("")}</div><p class="sub">Logo, colores y nombre del local se adaptan a cada cadena.</p></div>
+  <div class="label">Hoy en Local Centro</div>
+  <div class="kpis"><div class="kpi"><b>${(1284+LOG.total).toLocaleString("es-EC")}</b><span>búsquedas de clientes</span></div><div class="kpi"><b>93 %</b><span>encontró lo que buscaba</span></div><div class="kpi"><b>≈ 410</b><span>consultas menos al personal</span></div><div class="kpi"><b>$1.860</b><span>pagaron las marcas este mes</span></div></div>
+  <div class="card"><h3>Ventas que se están perdiendo</h3><p class="sub">Lo que los clientes buscaron y el local no tiene.</p>
+    <table><tr><th>Búsqueda</th><th class="n">Veces hoy</th></tr>${LOG.sinResultado.slice(0,3).map(q=>row(q,1,23,1)).join("")}${row("Leche de almendras",23,23)}${row("Harina sin gluten",17,23)}${row("Pilas AAA",11,23)}</table></div>
+  <div class="card"><h3>Lo que el asistente todavía no entiende</h3><p class="sub">Con esto se le enseñan frases nuevas cada semana.</p>
+    <table><tr><th>Mensaje del cliente</th></tr>${(typeof BOT_NO_ENTENDIO!=="undefined"?BOT_NO_ENTENDIO:[]).slice(0,4).map(q=>`<tr><td>${esc(q)} <span class="spon">Ahora</span></td></tr>`).join("")}<tr><td>¿tienen fundas biodegradables?</td></tr><tr><td>quiero lo de la promo de la tele</td></tr></table></div>
+  <div class="card"><h3>Lo más buscado</h3>
+    <table><tr><th>Producto</th><th class="n">Veces hoy</th></tr>${top.map(([n,c])=>row(n,c,141,1)).join("")}${row("Atún en agua",141,141)}${row("Salsa de tomate",97,141)}${row("Leche deslactosada",88,141)}</table></div>
+  <div class="card"><h3>Marcas que pagan por aparecer primero</h3>
+    <table><tr><th>Marca</th><th class="n">Vistas</th><th class="n">Clics</th><th class="n">Pago del mes</th></tr>
+    <tr><td>Sabor Real</td><td class="n">2.410</td><td class="n">188</td><td class="n">$820</td></tr><tr><td>Pescamar</td><td class="n">1.320</td><td class="n">74</td><td class="n">$560</td></tr><tr><td>Burbuja</td><td class="n">980</td><td class="n">50</td><td class="n">$480</td></tr></table>
+    <p class="sub">Siempre se muestran con la etiqueta «Patrocinado», para no perder la confianza del cliente.</p></div>
+  <div class="card"><h3>Qué recibe la cadena</h3><ul class="checks">
+    <li>Buscador por nombre, foto o lista, con pasillo, estante y altura exactos.</li>
+    <li>Asistente que compara precio, salud y rendimiento entre marcas.</li>
+    <li>Espacios patrocinados para vender a los proveedores.</li>
+    <li>Reporte de lo que el cliente busca y no encuentra.</li>
+    <li>Menos interrupciones al personal de percha.</li></ul></div>
+  <div class="card"><h3>Cómo se arranca</h3><ol class="steps">
+    <li><b>Un local piloto.</b> Se elige una sola tienda para probar.</li>
+    <li><b>El mapa del local.</b> El personal fotografía las perchas y la IA arma las ubicaciones, o se conecta al catálogo de la cadena.</li>
+    <li><b>QR en la entrada y carritos.</b> Se mide un mes: búsquedas, productos faltantes y clics a patrocinados.</li></ol></div>
+  <p class="fine">Todas las cifras de esta pantalla son de ejemplo.</p>`;
+}
+
+// ---------- Navegación ----------
+let vista="buscar";
+function ir(v){
+  vista=v; ["buscar","lista","empresa"].forEach(x=>$("#v-"+x).hidden=x!==v);
+  document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===v));
+  $("#tabs").hidden=v==="empresa"; $("#f").hidden=v==="empresa"; $("#fab").hidden=v==="empresa"; $("#vistaBtn").textContent=v==="empresa"?"‹ Vista cliente":"Vista empresa ›";
+  if(v==="lista") renderLista(); if(v==="empresa") renderEmpresa(); hideTa(); scrollTo(0,0);
+}
+function irInicio(){ $("#out").innerHTML=""; $("#home").hidden=false; $("#q").value=""; $("#clr").hidden=true; fotoUsuario=null; ir("buscar") }
+
+// ---------- Inicio ----------
+$("#sugg").innerHTML=["Atún","Salsa de tomate","Leche sin lactosa","Algo sano para el desayuno"].map(s=>`<button type="button" class="chip" data-s="${esc(s)}">${esc(s)}</button>`).join("")
+  +`<button type="button" class="chip" data-url="https://tienda-ejemplo.com/img/salsa-de-tomate-sin-azucar-350g.jpg">Pegar un enlace</button>`;
+$("#top").innerHTML=["t1","l2","s1","r1"].map(i=>byId[i]).map(p=>`<button class="tile" data-id="${p.id}" ${cvar(p.pasillo)}><span class="pk">${pack(p)}</span><b>${esc(p.nombre)}</b><span class="row2"><span class="mini">Pasillo ${p.pasillo}</span>${money(p.precio)}</span></button>`).join("");
+{ const p=byId.y2; $("#promo").innerHTML=`<button class="promo" data-id="${p.id}" ${cvar(p.pasillo)}><span class="pk">${pack(p)}</span><span><span class="spon">Patrocinado</span><b>${esc(p.nombre)} ${esc(p.marca)}</b><small>Pasillo ${p.pasillo} · ${PASILLOS[p.pasillo]}</small></span><span class="price">${money(p.precio)}</span></button>` }
+$("#dir").innerHTML=Object.keys(PASILLOS).map(n=>`<button data-pas="${n}" ${cvar(n)}><span class="num">${n}</span>${PASILLOS[n]}</button>`).join("");
+
+// ---------- Eventos ----------
+const Q=$("#q");
+Q.addEventListener("input",()=>{ $("#clr").hidden=!Q.value; renderTa(Q.value) });
+Q.addEventListener("focus",()=>{ if(Q.value) renderTa(Q.value) });
+Q.addEventListener("keydown",e=>{ if(e.key==="Escape") hideTa() });
+$("#f").addEventListener("submit",e=>{ e.preventDefault(); buscar(Q.value) });
+document.addEventListener("submit",e=>{ if(e.target.id==="chatF"){ e.preventDefault(); const v=$("#chatQ").value.trim(); if(v){ preguntar(v,"libre"); $("#chatQ").value="" } } });
+document.addEventListener("click",e=>{
+  if(!e.target.closest(".bar")) hideTa();
+  const t=e.target.closest("button"); if(!t) return; const d=t.dataset;
+  if("home" in d) irInicio();
+  else if("vista" in d) ir(vista==="empresa"?"buscar":"empresa");
+  else if("cam" in d){ if(AI&&AIimg) $("#cam").click(); else { fotoUsuario=null; ir("buscar"); fotoDemo("En esta vista el reconocimiento de fotos no está conectado. Elige un producto para ver cómo responde:") } }
+  else if("focus" in d){ Q.focus() }
+  else if("submit" in d) buscar(Q.value);
+  else if(d.url){ const w=urlPalabras(d.url); Q.value=w; $("#clr").hidden=false; aviso=`Pegaste un enlace. Leí el nombre del producto: “${w}”.`; buscar(w) }
+  else if(d.bot){ if(t.closest("#sheet")) return; abrirBot(d.bot) }
+  else if(d.s){ Q.value=d.s; $("#clr").hidden=false; buscar(d.s) }
+  else if(d.pas){ verPasillo(+d.pas) }
+  else if(d.id){ cerrarBot(); fotoUsuario=null; logSearch("",byId[d.id]); ir("buscar"); mostrar(byId[d.id]) }
+  else if(d.foto){ const p=byId[d.foto]; logSearch("(foto)",p); mostrar(p,`Reconocí ${p.nombre} de ${p.marca}.`) }
+  else if(d.ord){ ordenar(actual,d.ord) }
+  else if(d.ask){ preguntar(t.textContent,d.ask) }
+  else if(d.q){ preguntar(d.q,"libre") }
+  else if(d.hecho){ hechos=hechos.includes(d.hecho)?hechos.filter(x=>x!==d.hecho):[...hechos,d.hecho]; guardar(); renderLista() }
+  else if(d.del){ lista=lista.filter(i=>i!==d.del); hechos=hechos.filter(i=>i!==d.del); delete cant[d.del]; guardar(); renderLista() }
+  else if(d.brand){ setMarca(d.brand); renderEmpresa() }
+  else if(d.v){ ir(d.v) }
+  else if(t.id==="clr"){ Q.value=""; t.hidden=true; hideTa(); Q.focus() }
+  else if(t.id==="addBtn"&&actual){ if(lista.includes(actual.id)) ir("lista"); else { lista.push(actual.id); guardar(); t.textContent="✓ En tu ruta · ver mi ruta"; t.classList.add("done") } }
+});
+setMarca(marca); guardar();
+</script>
+<script src="bot.js"></script>
